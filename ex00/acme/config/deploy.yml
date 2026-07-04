@@ -1,0 +1,59 @@
+# Kamal config for exercise ex00 (app "acme", first version).
+#
+# Images are built and pushed by CI (.github/workflows/build.yml) to
+#   ghcr.io/pulgamecanica/acme-ex00:<git-sha>
+# so deploys DO NOT build locally — they pull the prebuilt image:
+#
+#   kamal deploy --skip-push          # (or `kamal setup --skip-push` first time)
+#
+# Postgres is a single shared accessory (see ../../infra/), reachable on the
+# kamal network as host "shared-postgres". This ex uses its own database.
+
+# Unique per-exercise service name (isolates containers on the shared host).
+service: acme_ex00
+
+# CI-built image on GHCR: ghcr.io/pulgamecanica/acme-ex00
+image: pulgamecanica/acme-ex00
+
+servers:
+  web:
+    - 165.22.16.194
+
+# Public host + automatic Let's Encrypt TLS. kamal-proxy routes by hostname,
+# so each exercise can live on the same droplet under its own subdomain.
+proxy:
+  ssl: true
+  host: ror-advanced-00.pulgamecanica.com
+  app_port: 3000
+
+registry:
+  server: ghcr.io
+  username: pulgamecanica
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+env:
+  clear:
+    # Shared Postgres accessory, reached by container name on the kamal network.
+    DATABASE_HOST: shared-postgres
+    DATABASE_PORT: 5432
+    POSTGRES_USER: acme
+    # This exercise's own database (created by db:prepare on first boot).
+    POSTGRES_DB: acme_ex00_production
+    RAILS_SERVE_STATIC_FILES: "true"
+    RAILS_LOG_TO_STDOUT: "true"
+  secret:
+    - RAILS_MASTER_KEY
+    - POSTGRES_PASSWORD
+
+# NOTE: no `accessories:` here on purpose — Postgres is owned by ../../infra/
+# and shared across all exercises (one database per ex).
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole"

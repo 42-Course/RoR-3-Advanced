@@ -1,0 +1,44 @@
+# Shared infrastructure for ALL exercises.
+#
+# This project is NEVER `kamal deploy`-ed. It exists only to own the single,
+# shared PostgreSQL accessory that every exercise connects to. Boot it once:
+#
+#   cd infra
+#   kamal accessory boot db
+#
+# The accessory has an explicit `service: shared-postgres`, so its container is
+# named "shared-postgres" on the shared `kamal` docker network — reachable by
+# every exercise's app container as host "shared-postgres". Each exercise uses
+# its own database (acme_ex00_production, acme_ex01_production, ...), created
+# automatically by that app's `db:prepare` on first boot.
+
+service: acme_shared
+# Placeholder — never built or deployed; only `kamal accessory ...` is used.
+image: pulgamecanica/acme-shared
+
+servers:
+  web:
+    - 165.22.16.194
+
+registry:
+  server: ghcr.io
+  username: pulgamecanica
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+accessories:
+  db:
+    # Fixed container name shared across the whole host.
+    service: shared-postgres
+    image: postgres:15
+    host: 165.22.16.194
+    # No `port:` — not published to the host; only reachable on the kamal network.
+    env:
+      clear:
+        POSTGRES_USER: acme
+        # Bootstrap database; per-exercise DBs are created by each app.
+        POSTGRES_DB: acme
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data

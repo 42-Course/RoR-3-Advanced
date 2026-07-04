@@ -1,0 +1,27 @@
+# Development image used by docker-compose.
+# Matches the versions pinned by the provided Gemfile (Ruby 3.0.2).
+FROM ruby:3.0.2-slim
+
+# System packages:
+#  - build-essential / libyaml-dev : compile native gems
+#  - libpq-dev                     : pg gem
+#  - nodejs                        : execjs runtime for uglifier / coffee-rails
+#  - git, curl                     : tooling
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      build-essential libpq-dev libyaml-dev git curl nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install gems first so this layer is cached across code changes.
+COPY Gemfile Gemfile.lock ./
+RUN gem install bundler && bundle install
+
+# App code (overridden by the bind-mount in docker-compose during dev).
+COPY . .
+
+EXPOSE 3000
+
+# Remove a stale server pid then boot Puma bound to all interfaces.
+CMD ["bash", "-c", "rm -f tmp/pids/server.pid && bin/rails server -b 0.0.0.0 -p 3000"]

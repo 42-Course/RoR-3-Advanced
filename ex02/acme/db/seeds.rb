@@ -15,22 +15,26 @@ end
 brand_count = Integer(ENV.fetch("SEED_BRANDS", 50))
 products_per_brand = Integer(ENV.fetch("SEED_PRODUCTS_PER_BRAND", 50))
 
-if Brand.none?
-  brand_count.times do
-    brand = Brand.create!(
-      name: FFaker::Product.brand,
-      remote_avatar_url: FFaker::Avatar.image
-    )
+# Top up brands to the target count. A short random suffix makes every brand
+# unique even when FFaker repeats a name. Idempotent: re-running does nothing
+# once the target is reached.
+while Brand.count < brand_count
+  Brand.create!(
+    name: "#{FFaker::Product.brand} #{SecureRandom.alphanumeric(5)}",
+    remote_avatar_url: FFaker::Avatar.image
+  )
+end
 
-    products_per_brand.times do
-      Product.create!(
-        name: FFaker::Product.product,
-        remote_pict_url: FFaker::Avatar.image,
-        description: FFaker::HipsterIpsum.paragraph,
-        brand: brand,
-        price: rand(1.0..100.0).round(2)
-      )
-    end
+# Top up each brand to products_per_brand products (also uniquely named).
+Brand.find_each do |brand|
+  (products_per_brand - brand.products.count).times do
+    Product.create!(
+      name: "#{FFaker::Product.product} #{SecureRandom.alphanumeric(5)}",
+      remote_pict_url: FFaker::Avatar.image,
+      description: FFaker::HipsterIpsum.paragraph,
+      brand: brand,
+      price: rand(1.0..100.0).round(2)
+    )
   end
 end
 

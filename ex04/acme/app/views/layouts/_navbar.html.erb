@@ -9,15 +9,20 @@
     </button>
 
     <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav ms-auto align-items-lg-center">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
         <% if user_signed_in? %>
           <li class="nav-item"><%= link_to "Catalog", products_path, class: "nav-link" %></li>
           <li class="nav-item"><%= link_to "Brands", brands_path, class: "nav-link" %></li>
+
           <li class="nav-item">
-            <%= link_to cart_path, class: "nav-link" do %>
-              Cart<% if current_cart.total_quantity.to_i.positive? %><span class="count-badge"><%= current_cart.total_quantity %></span><% end %>
+            <%= link_to cart_path, class: "nav-link d-inline-flex align-items-center gap-1 position-relative" do %>
+              <span>Cart</span>
+              <% if current_cart.total_quantity.to_i.positive? %>
+                <span class="count-badge"><%= current_cart.total_quantity %></span>
+              <% end %>
             <% end %>
           </li>
+
           <li class="nav-item"><%= link_to "Orders", orders_path, class: "nav-link" %></li>
           <li class="nav-item"><%= link_to "Admin", rails_admin_path, class: "nav-link" %></li>
           <li class="nav-divider d-none d-lg-block" aria-hidden="true"></li>

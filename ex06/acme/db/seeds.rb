@@ -35,34 +35,66 @@ end
   end
 end
 
-# --- Catalog ----------------------------------------------------------------
-# Brands, each with products. Images upload to Cloudinary via CarrierWave's
-# remote_*_url (Ruby 3 removed Kernel#open for URLs). Defaults to the subject's
-# 50 x 50 (= 2500 products); shrink with SEED_BRANDS / SEED_PRODUCTS_PER_BRAND.
+# --- Catalog (fast seed) ----------------------------------------------------
+# The slow part of seeding is NOT FFaker — it's uploading a unique image to
+# Cloudinary for every record (thousands of network round-trips). Instead we
+# upload a small POOL of images to Cloudinary once and reuse their stored
+# identifiers, then bulk-insert brands/products with insert_all. Names come
+# from a bounded name pool + a random suffix so every record stays unique.
 brand_count = Integer(ENV.fetch("SEED_BRANDS", 50))
 products_per_brand = Integer(ENV.fetch("SEED_PRODUCTS_PER_BRAND", 50))
+image_pool_size = Integer(ENV.fetch("SEED_IMAGE_POOL", 20))
 
-# Top up brands to the target count. A short random suffix makes every brand
-# unique even when FFaker repeats a name. Idempotent: re-running does nothing
-# once the target is reached.
-while Brand.count < brand_count
-  Brand.create!(
-    name: "#{FFaker::Product.brand} #{SecureRandom.alphanumeric(5)}",
-    remote_avatar_url: FFaker::Avatar.image
-  )
-end
-
-# Top up each brand to products_per_brand products (also uniquely named).
-Brand.find_each do |brand|
-  (products_per_brand - brand.products.count).times do
-    Product.create!(
-      name: "#{FFaker::Product.product} #{SecureRandom.alphanumeric(5)}",
-      remote_pict_url: FFaker::Avatar.image,
-      description: FFaker::HipsterIpsum.paragraph,
-      brand: brand,
-      price: rand(1.0..100.0).round(2)
-    )
+if Brand.count < brand_count || Product.count < brand_count * products_per_brand
+  # 1) Image pool: a handful of real Cloudinary uploads. We capture each stored
+  #    identifier, then `delete` (not `destroy`) the scratch rows so the row is
+  #    gone but the Cloudinary image is kept and can be shared by many records.
+  avatar_pool = []
+  pict_pool = []
+  image_pool_size.times do
+    scratch_brand = Brand.create!(name: "POOL-#{SecureRandom.hex(6)}", remote_avatar_url: FFaker::Avatar.image)
+    scratch_product = Product.create!(name: "POOL-#{SecureRandom.hex(6)}",
+                                      remote_pict_url: FFaker::Avatar.image,
+                                      brand: scratch_brand, price: 1.0)
+    avatar_pool << scratch_brand.read_attribute(:avatar)
+    pict_pool << scratch_product.read_attribute(:pict)
+    scratch_product.delete
+    scratch_brand.delete
   end
+
+  # 2) Bounded FFaker name pools (called a few hundred times, not 2500+).
+  brand_names = Array.new(100) { FFaker::Product.brand }
+  product_names = Array.new(300) { FFaker::Product.product }
+  descriptions = Array.new(30) { FFaker::HipsterIpsum.paragraph }
+  now = Time.current
+
+  # 3) Bulk-insert the missing brands (pooled avatar, unique name).
+  missing_brands = brand_count - Brand.count
+  if missing_brands.positive?
+    Brand.insert_all(Array.new(missing_brands) do
+      {
+        name: "#{brand_names.sample} #{SecureRandom.alphanumeric(5)}",
+        avatar: avatar_pool.sample,
+        created_at: now, updated_at: now
+      }
+    end)
+  end
+
+  # 4) Bulk-insert products, topping each brand up to products_per_brand.
+  product_rows = []
+  Brand.find_each do |brand|
+    (products_per_brand - brand.products.count).times do
+      product_rows << {
+        name: "#{product_names.sample} #{SecureRandom.alphanumeric(5)}",
+        description: descriptions.sample,
+        price: rand(1.0..100.0).round(2),
+        brand_id: brand.id,
+        pict: pict_pool.sample,
+        created_at: now, updated_at: now
+      }
+    end
+  end
+  product_rows.each_slice(1000) { |slice| Product.insert_all(slice) }
 end
 
 puts "Seeded #{User.count} user(s) " \

@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+# Prepare the database (create + migrate) before starting the Rails server.
+if [ "${*}" == "bin/rails server -b 0.0.0.0 -p 3000" ] || [ "${1}" == "bin/rails" ] && [ "${2}" == "server" ]; then
+  bundle exec rails db:prepare
+fi
+
+exec "${@}"

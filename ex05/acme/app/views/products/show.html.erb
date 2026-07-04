@@ -1,0 +1,22 @@
+<div class="row g-4 g-lg-5">
+  <div class="col-md-6">
+    <% if @product.pict? %>
+      <%= image_tag @product.pict_url, alt: @product.name, class: "detail-media w-100" %>
+    <% else %>
+      <div class="detail-media card-media" style="height: 320px;"><span class="no-image">NO IMAGE</span></div>
+    <% end %>
+  </div>
+
+  <div class="col-md-6">
+    <p class="detail-brand mb-1"><%= link_to @product.brand.name, @product.brand %></p>
+    <h1 class="mb-2"><%= @product.name %></h1>
+    <p class="detail-price"><%= number_to_currency @product.price %></p>
+
+    <div class="my-3"><%= simple_format @product.description %></div>
+
+    <%= button_to "Add to cart", cart_items_path(product_id: @product.id),
+          method: :post, class: "btn btn-ink" %>
+
+    <div class="mt-4"><%= link_to "← Back to catalog", products_path %></div>
+  </div>
+</div>

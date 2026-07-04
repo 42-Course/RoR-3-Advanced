@@ -1,0 +1,26 @@
+<div class="text-center py-4 py-lg-5">
+  <h1 class="display-6 mb-2">Acme</h1>
+  <p class="text-muted">A small catalog, quietly presented.</p>
+</div>
+
+<% if user_signed_in? %>
+  <div class="paper-card text-center">
+    <p class="mb-1">Signed in as <strong><%= current_user.name %></strong>.</p>
+    <% if current_user.bio.present? %>
+      <blockquote class="fst-italic text-muted small"><%= current_user.bio %></blockquote>
+    <% end %>
+    <div class="d-grid gap-2 mt-3">
+      <%= link_to "Browse the catalog", products_path, class: "btn btn-ink" %>
+      <%= link_to "View my cart", cart_path, class: "btn btn-line" %>
+      <%= link_to "Edit my profile", edit_user_registration_path, class: "btn btn-line" %>
+    </div>
+  </div>
+<% else %>
+  <div class="paper-card text-center">
+    <p>Please sign in to browse the catalog.</p>
+    <div class="d-grid gap-2 mt-3">
+      <%= link_to "Sign in", new_user_session_path, class: "btn btn-ink" %>
+      <%= link_to "Create an account", new_user_registration_path, class: "btn btn-line" %>
+    </div>
+  </div>
+<% end %>

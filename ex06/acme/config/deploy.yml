@@ -1,0 +1,77 @@
+# Kamal config for exercise ex06 (app "acme", first version).
+#
+# IMPORTANT: run kamal from your HOST (not inside the app container) — kamal 2.x
+# needs ActiveSupport 7.1+, which conflicts with the app's pinned Rails 7.0.
+# Because the app dir carries .ruby-version=3.0.2 (not installed on the host),
+# prefix kamal with a host ruby, e.g.:
+#
+#   cd ex06/acme
+#   export KAMAL_REGISTRY_PASSWORD=ghp_xxx        # classic GHCR PAT (write:packages)
+#   RBENV_VERSION=3.3.6 kamal setup               # first time: builds+pushes+deploys
+#   RBENV_VERSION=3.3.6 kamal deploy              # subsequent releases
+#
+# This config is SELF-CONTAINED: it runs its own Postgres accessory, so a single
+# `kamal setup` brings up proxy + db + app. When you add ex06+, switch to the
+# shared Postgres in ../../infra/ (set DATABASE_HOST: shared-postgres and drop
+# the accessories block) and deploy CI-built images with `kamal deploy --skip-push`.
+
+# Unique per-exercise service name (isolates containers on the shared host).
+service: acme_ex06
+
+# Image on GHCR: ghcr.io/pulgamecanica/acme-ex06 (also what CI builds).
+image: pulgamecanica/acme-ex06
+
+servers:
+  web:
+    - 165.22.16.194
+
+# Public host + automatic Let's Encrypt TLS. kamal-proxy routes by hostname,
+# so each exercise can live on the same droplet under its own subdomain.
+proxy:
+  ssl: true
+  host: ror-advanced-06.pulgamecanica.com
+  app_port: 3000
+
+registry:
+  server: ghcr.io
+  username: pulgamecanica
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+env:
+  clear:
+    # Reach this exercise's own Postgres accessory over the kamal network.
+    DATABASE_HOST: acme_ex06-db
+    DATABASE_PORT: 5432
+    POSTGRES_USER: acme
+    POSTGRES_DB: acme_ex06_production
+    RAILS_SERVE_STATIC_FILES: "true"
+    RAILS_LOG_TO_STDOUT: "true"
+  secret:
+    - RAILS_MASTER_KEY
+    - POSTGRES_PASSWORD
+    - CLOUDINARY_URL
+
+# Self-contained Postgres for this exercise (container name: acme_ex06-db).
+accessories:
+  db:
+    image: postgres:15
+    host: 165.22.16.194
+    # No `port:` — not published to the host; only reachable on the kamal network.
+    env:
+      clear:
+        POSTGRES_USER: acme
+        POSTGRES_DB: acme_ex06_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole"

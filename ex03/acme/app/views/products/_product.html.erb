@@ -1,0 +1,20 @@
+<article class="product-card">
+  <div class="card-media">
+    <%= link_to product do %>
+      <% if product.pict? %>
+        <%= image_tag product.pict_url(:thumb), alt: product.name, loading: "lazy" %>
+      <% else %>
+        <span class="no-image">NO IMAGE</span>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="card-body">
+    <div class="card-title"><%= link_to product.name, product %></div>
+    <div class="card-brand"><%= product.brand.name %></div>
+    <div class="card-price"><%= number_to_currency product.price %></div>
+    <div class="card-actions">
+      <%= button_to "Add to cart", cart_items_path(product_id: product.id),
+            method: :post, class: "btn btn-line btn-sm w-100" %>
+    </div>
+  </div>
+</article>

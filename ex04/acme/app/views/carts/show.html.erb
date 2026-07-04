@@ -1,0 +1,56 @@
+<div class="section-head">
+  <h1>Your cart</h1>
+  <span class="meta"><%= pluralize(@cart.total_quantity, "item") %></span>
+</div>
+
+<% if @cart.empty? %>
+  <p>Your cart is empty. <%= link_to "Browse the catalog", products_path %>.</p>
+<% else %>
+  <div class="table-responsive">
+    <table class="line-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Unit price</th>
+          <th>Quantity</th>
+          <th class="text-end">Subtotal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @cart.cart_items.includes(:product).order(:id).each do |item| %>
+          <tr>
+            <td>
+              <%= link_to item.product.name, item.product %><br>
+              <span class="card-brand"><%= item.product.brand.name %></span>
+            </td>
+            <td><%= number_to_currency item.product.price %></td>
+            <td>
+              <div class="qty-control">
+                <%= button_to "−", decrement_cart_item_path(item), method: :patch, class: "btn btn-line btn-sm" %>
+                <span class="qty-value"><%= item.quantity %></span>
+                <%= button_to "+", increment_cart_item_path(item), method: :patch, class: "btn btn-line btn-sm" %>
+              </div>
+            </td>
+            <td class="text-end"><%= number_to_currency item.subtotal %></td>
+            <td class="text-end">
+              <%= button_to "Remove", cart_item_path(item), method: :delete, class: "btn btn-link btn-sm text-muted p-0" %>
+            </td>
+          </tr>
+        <% end %>
+        <tr class="totals-row">
+          <td colspan="3">Total</td>
+          <td class="text-end"><%= number_to_currency @cart.total %></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    <%= button_to "Checkout", orders_path, method: :post, class: "btn btn-ink" %>
+    <%= button_to "Cancel cart", cart_path, method: :delete, class: "btn btn-line",
+          data: { turbo_confirm: "Empty your cart?" } %>
+    <%= link_to "Continue shopping", products_path, class: "btn btn-line" %>
+  </div>
+<% end %>

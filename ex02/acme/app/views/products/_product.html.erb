@@ -1,12 +1,16 @@
 <article class="product-card">
-  <%= link_to product do %>
-    <% if product.pict? %>
-      <%= image_tag product.pict_url(:thumb), alt: product.name, loading: "lazy" %>
-    <% else %>
-      <div class="no-image">No image</div>
+  <div class="card-media">
+    <%= link_to product do %>
+      <% if product.pict? %>
+        <%= image_tag product.pict_url(:thumb), alt: product.name, loading: "lazy" %>
+      <% else %>
+        <span class="no-image">NO IMAGE</span>
+      <% end %>
     <% end %>
-    <h2><%= product.name %></h2>
-  <% end %>
-  <p class="brand"><%= product.brand.name %></p>
-  <p class="price"><%= number_to_currency product.price %></p>
+  </div>
+  <div class="card-body">
+    <div class="card-title"><%= link_to product.name, product %></div>
+    <div class="card-brand"><%= product.brand.name %></div>
+    <div class="card-price"><%= number_to_currency product.price %></div>
+  </div>
 </article>

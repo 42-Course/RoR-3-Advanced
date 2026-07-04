@@ -1,0 +1,33 @@
+<div class="section-head">
+  <h1>Order #<%= @order.id %></h1>
+  <span class="meta"><%= @order.created_at.strftime("%B %-d, %Y") %></span>
+</div>
+
+<div class="table-responsive">
+  <table class="line-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Unit price</th>
+        <th>Qty</th>
+        <th class="text-end">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @order.order_items.includes(:product).each do |item| %>
+        <tr>
+          <td><%= item.product.name %></td>
+          <td><%= number_to_currency item.price %></td>
+          <td><%= item.quantity %></td>
+          <td class="text-end"><%= number_to_currency item.subtotal %></td>
+        </tr>
+      <% end %>
+      <tr class="totals-row">
+        <td colspan="3">Total</td>
+        <td class="text-end"><%= number_to_currency @order.total %></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-4"><%= link_to "← Back to catalog", products_path %></div>

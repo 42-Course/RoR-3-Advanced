@@ -1,0 +1,35 @@
+# Development image used by docker-compose.
+# Matches the versions pinned by the provided Gemfile (Ruby 3.0.2).
+FROM ruby:3.0.2-slim
+
+# System packages:
+#  - build-essential / libyaml-dev : compile native gems
+#  - libpq-dev                     : pg gem
+#  - nodejs                        : execjs runtime for uglifier / coffee-rails
+#  - imagemagick                   : CarrierWave::MiniMagick thumbnails
+#  - git, curl                     : tooling
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      build-essential libpq-dev libyaml-dev git curl nodejs imagemagick && \
+    rm -rf /var/lib/apt/lists/*
+
+# rubycritic -> reek -> kwalify calls StringScanner#peep, removed in strscan
+# 3.1.1+ (this slim image ships 3.1.8). Restore it for every ruby process so
+# `rubycritic` runs bare. Dev tooling only — no app or Gemfile change.
+RUN printf 'require "strscan"\nclass StringScanner\n  alias_method(:peep, :peek) unless method_defined?(:peep)\nend\n' \
+      > /usr/local/lib/peep_patch.rb
+ENV RUBYOPT="-r/usr/local/lib/peep_patch.rb"
+
+WORKDIR /app
+
+# Install gems first so this layer is cached across code changes.
+COPY Gemfile Gemfile.lock ./
+RUN gem install bundler && bundle install
+
+# App code (overridden by the bind-mount in docker-compose during dev).
+COPY . .
+
+EXPOSE 3000
+
+# Remove a stale server pid then boot Puma bound to all interfaces.
+CMD ["bash", "-c", "rm -f tmp/pids/server.pid && bin/rails server -b 0.0.0.0 -p 3000"]

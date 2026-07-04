@@ -1,0 +1,31 @@
+<div class="section-head">
+  <h1>My orders</h1>
+  <span class="meta"><%= pluralize(@orders.size, "order") %></span>
+</div>
+
+<% if @orders.empty? %>
+  <p>You have no orders yet. <%= link_to "Browse the catalog", products_path %>.</p>
+<% else %>
+  <div class="table-responsive">
+    <table class="line-table">
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th class="text-end">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @orders.each do |order| %>
+          <tr>
+            <td><%= link_to "##{order.id}", order %></td>
+            <td><%= order.created_at.strftime("%B %-d, %Y") %></td>
+            <td><%= pluralize(order.order_items.sum(:quantity), "item") %></td>
+            <td class="text-end"><%= number_to_currency order.total %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

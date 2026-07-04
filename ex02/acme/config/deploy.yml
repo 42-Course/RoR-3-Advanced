@@ -53,6 +53,7 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
+    - CLOUDINARY_URL
 
 # Self-contained Postgres for this exercise (container name: acme_ex02-db).
 accessories:

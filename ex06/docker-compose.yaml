@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    # No `ports:` — the database is only reachable by the `web` service over
+    # the internal compose network, never published to the host.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ./acme
+      dockerfile: Dockerfile.dev
+    env_file: .env
+    environment:
+      # Inside the compose network the database host is the `db` service.
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+    ports:
+      - "3000:3000"
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./acme:/app
+      # Keep container-installed gems from being shadowed by the bind-mount.
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  bundle_cache:

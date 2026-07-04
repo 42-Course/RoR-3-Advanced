@@ -1,0 +1,14 @@
+<section class="home">
+  <h1>Welcome to Acme</h1>
+
+  <% if user_signed_in? %>
+    <p>Signed in as <strong><%= current_user.name %></strong> (<%= current_user.email %>).</p>
+    <% if current_user.bio.present? %>
+      <blockquote><%= current_user.bio %></blockquote>
+    <% end %>
+    <p>
+      <%= link_to "Edit my profile", edit_user_registration_path %> ·
+      <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "link" %>
+    </p>
+  <% end %>
+</section>

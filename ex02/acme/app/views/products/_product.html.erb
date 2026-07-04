@@ -1,0 +1,12 @@
+<article class="product-card">
+  <%= link_to product do %>
+    <% if product.pict? %>
+      <%= image_tag product.pict_url(:thumb), alt: product.name, loading: "lazy" %>
+    <% else %>
+      <div class="no-image">No image</div>
+    <% end %>
+    <h2><%= product.name %></h2>
+  <% end %>
+  <p class="brand"><%= product.brand.name %></p>
+  <p class="price"><%= number_to_currency product.price %></p>
+</article>

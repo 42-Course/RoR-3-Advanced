@@ -1,0 +1,12 @@
+<article class="product-detail">
+  <% if @product.pict? %>
+    <%= image_tag @product.pict_url, alt: @product.name, class: "full-image" %>
+  <% end %>
+
+  <h1><%= @product.name %></h1>
+  <p class="brand">Brand: <%= link_to @product.brand.name, @product.brand %></p>
+  <p class="price"><%= number_to_currency @product.price %></p>
+  <div class="description"><%= simple_format @product.description %></div>
+
+  <%= link_to "← Back to catalog", products_path %>
+</article>

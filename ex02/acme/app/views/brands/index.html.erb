@@ -1,0 +1,17 @@
+<h1>Brands</h1>
+
+<div class="brands">
+  <% @brands.each do |brand| %>
+    <article class="brand-card">
+      <%= link_to brand do %>
+        <% if brand.avatar? %>
+          <%= image_tag brand.avatar_url(:thumb), alt: brand.name, loading: "lazy" %>
+        <% else %>
+          <div class="no-image">No image</div>
+        <% end %>
+        <h2><%= brand.name %></h2>
+      <% end %>
+      <p><%= pluralize(brand.products.size, "product") %></p>
+    </article>
+  <% end %>
+</div>

@@ -1,0 +1,15 @@
+# Environment / secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Kamal / Rails secrets
+acme/config/master.key
+acme/.kamal/secrets
+
+# OS / editor noise
+.DS_Store
+*.swp
+
+# Subject artifacts (not part of the deliverable)
+*.tgz

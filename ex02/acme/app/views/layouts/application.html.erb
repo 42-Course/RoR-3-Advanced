@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Acme</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <header class="site-nav">
+      <%= link_to "Acme", root_path, class: "brand" %>
+      <nav>
+        <% if user_signed_in? %>
+          <span>Hi, <%= current_user.name %></span>
+          <%= link_to "My profile", edit_user_registration_path %>
+          <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "link" %>
+        <% else %>
+          <%= link_to "Sign in", new_user_session_path %>
+          <%= link_to "Sign up", new_user_registration_path %>
+        <% end %>
+      </nav>
+    </header>
+
+    <% flash.each do |type, message| %>
+      <p class="flash flash-<%= type %>"><%= message %></p>
+    <% end %>
+
+    <main>
+      <%= yield %>
+    </main>
+  </body>
+</html>

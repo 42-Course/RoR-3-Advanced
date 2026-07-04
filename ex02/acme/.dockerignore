@@ -1,0 +1,33 @@
+# Git
+.git/
+.gitignore
+
+# CI / local env
+.env
+.env.*
+
+# Dev-only Dockerfile
+Dockerfile.dev
+
+# Logs & temp
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Runtime storage & uploads
+/storage/*
+!/storage/.keep
+
+# Precompiled assets (regenerated in the image)
+/public/assets
+
+# Local bundle
+/.bundle
+/vendor/bundle
+
+# Editor noise
+.DS_Store

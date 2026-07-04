@@ -1,0 +1,21 @@
+<!-- Image gallery row with hover effects -->
+<div class="flex-1">
+<% 10.times do %>
+<div class="row g-0">
+  <% [1,2,3].shuffle!.each do |t| %>
+    <div class="col-md-4 position-relative overflow-hidden" style="height: 300px;">
+      <img src="<%= asset_path('flower' + t.to_s + '.jpg') %>" 
+          alt="Purple flower" 
+          class="w-100 h-100" 
+          style="object-fit: cover; transition: transform 0.6s ease, filter 0.6s ease; filter: grayscale(30%);"
+          onmouseover="this.style.transform='scale(1.1)'; this.style.filter='grayscale(0%)';"
+          onmouseout="this.style.transform='scale(1)'; this.style.filter='grayscale(30%)';">
+      <div class="position-absolute bottom-0 start-0 w-100 p-3 text-white" 
+          style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);">
+        <span class="fw-bold">{<%= t %>}_Flower</span>
+      </div>
+    </div>
+  <% end %>
+</div>
+<% end %>
+</div>

@@ -1,0 +1,29 @@
+# PostgreSQL. Versions 9.3 and up are supported.
+#
+# All connection settings are driven by environment variables so the same
+# configuration works in docker-compose (development/test) and in production
+# behind Kamal. See .env / .env.example at the project root.
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
+  username: <%= ENV.fetch("POSTGRES_USER", "acme") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DB", "acme_development") %>
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_TEST_DB", "acme_test") %>
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DB", "acme_production") %>

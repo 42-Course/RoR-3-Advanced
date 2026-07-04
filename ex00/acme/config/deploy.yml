@@ -1,18 +1,24 @@
 # Kamal config for exercise ex00 (app "acme", first version).
 #
-# Images are built and pushed by CI (.github/workflows/build.yml) to
-#   ghcr.io/pulgamecanica/acme-ex00:<git-sha>
-# so deploys DO NOT build locally — they pull the prebuilt image:
+# IMPORTANT: run kamal from your HOST (not inside the app container) — kamal 2.x
+# needs ActiveSupport 7.1+, which conflicts with the app's pinned Rails 7.0.
+# Because the app dir carries .ruby-version=3.0.2 (not installed on the host),
+# prefix kamal with a host ruby, e.g.:
 #
-#   kamal deploy --skip-push          # (or `kamal setup --skip-push` first time)
+#   cd ex00/acme
+#   export KAMAL_REGISTRY_PASSWORD=ghp_xxx        # classic GHCR PAT (write:packages)
+#   RBENV_VERSION=3.3.6 kamal setup               # first time: builds+pushes+deploys
+#   RBENV_VERSION=3.3.6 kamal deploy              # subsequent releases
 #
-# Postgres is a single shared accessory (see ../../infra/), reachable on the
-# kamal network as host "shared-postgres". This ex uses its own database.
+# This config is SELF-CONTAINED: it runs its own Postgres accessory, so a single
+# `kamal setup` brings up proxy + db + app. When you add ex01+, switch to the
+# shared Postgres in ../../infra/ (set DATABASE_HOST: shared-postgres and drop
+# the accessories block) and deploy CI-built images with `kamal deploy --skip-push`.
 
 # Unique per-exercise service name (isolates containers on the shared host).
 service: acme_ex00
 
-# CI-built image on GHCR: ghcr.io/pulgamecanica/acme-ex00
+# Image on GHCR: ghcr.io/pulgamecanica/acme-ex00 (also what CI builds).
 image: pulgamecanica/acme-ex00
 
 servers:
@@ -37,11 +43,10 @@ builder:
 
 env:
   clear:
-    # Shared Postgres accessory, reached by container name on the kamal network.
-    DATABASE_HOST: shared-postgres
+    # Reach this exercise's own Postgres accessory over the kamal network.
+    DATABASE_HOST: acme_ex00-db
     DATABASE_PORT: 5432
     POSTGRES_USER: acme
-    # This exercise's own database (created by db:prepare on first boot).
     POSTGRES_DB: acme_ex00_production
     RAILS_SERVE_STATIC_FILES: "true"
     RAILS_LOG_TO_STDOUT: "true"
@@ -49,8 +54,20 @@ env:
     - RAILS_MASTER_KEY
     - POSTGRES_PASSWORD
 
-# NOTE: no `accessories:` here on purpose — Postgres is owned by ../../infra/
-# and shared across all exercises (one database per ex).
+# Self-contained Postgres for this exercise (container name: acme_ex00-db).
+accessories:
+  db:
+    image: postgres:15
+    host: 165.22.16.194
+    # No `port:` — not published to the host; only reachable on the kamal network.
+    env:
+      clear:
+        POSTGRES_USER: acme
+        POSTGRES_DB: acme_ex00_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

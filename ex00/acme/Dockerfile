@@ -37,8 +37,11 @@ COPY . .
 # Precompile bootsnap for faster boot.
 RUN bundle exec bootsnap precompile app/ lib/ || true
 
-# Precompile assets without needing the real master key.
-RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
+# Precompile assets without the real master key. Rails 7.0 has no
+# SECRET_KEY_BASE_DUMMY support (added in 7.1), so pass a throwaway
+# SECRET_KEY_BASE just to boot the app for precompilation.
+RUN SECRET_KEY_BASE=dummy_secret_key_base_for_assets_precompile \
+    bundle exec rails assets:precompile
 
 
 # ---- final stage -----------------------------------------------------------
